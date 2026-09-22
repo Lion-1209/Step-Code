@@ -531,6 +531,8 @@ export class AgentSessionRuntime implements AgentSessionRuntimeHost {
 			const session = this._session;
 			try {
 				if (!this.currentSessionDisposed) {
+					// Settle prompt hooks and model work before invalidating their context.
+					await session.abort();
 					await emitSessionShutdownEvent(session.extensionRunner, {
 						type: "session_shutdown",
 						reason: "quit",

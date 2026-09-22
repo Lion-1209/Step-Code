@@ -952,6 +952,7 @@ export class AgentSession {
 	 */
 	dispose(): void {
 		try {
+			this._agentRunAbortController?.abort();
 			this.abortRetry();
 			this.abortCompaction();
 			this.abortBranchSummary();
@@ -988,12 +989,12 @@ export class AgentSession {
 		return this.agent.state.thinkingLevel;
 	}
 
-	/** Whether the session is currently processing an agent run or post-run continuation. */
+	/** Whether the session is processing prompt hooks, an agent run, or post-run continuation. */
 	get isStreaming(): boolean {
 		return this._isAgentRunActive;
 	}
 
-	/** Whether the session has no active agent run, retry, auto-compaction, or queued continuation. */
+	/** Whether the session has no active prompt hooks, agent run, retry, or queued continuation. */
 	get isIdle(): boolean {
 		return !this._isAgentRunActive;
 	}
@@ -1203,11 +1204,16 @@ export class AgentSession {
 	// Prompting
 	// =========================================================================
 
-	private async _runAgentPrompt(messages: AgentMessage | AgentMessage[]): Promise<void> {
+	private async _runAgentPrompt(
+		messages: AgentMessage | AgentMessage[],
+		beforeStart?: (signal: AbortSignal) => Promise<void>,
+	): Promise<void> {
 		const runAbortController = new AbortController();
 		this._agentRunAbortController = runAbortController;
 		this._isAgentRunActive = true;
 		try {
+			if (beforeStart) await beforeStart(runAbortController.signal);
+			if (runAbortController.signal.aborted) return;
 			await this.agent.prompt(messages);
 			while (
 				!runAbortController.signal.aborted &&
@@ -1276,6 +1282,7 @@ export class AgentSession {
 		const expandPromptTemplates = options?.expandPromptTemplates ?? true;
 		const preflightResult = options?.preflightResult;
 		let messages: AgentMessage[] | undefined;
+		let beforeStart: ((signal: AbortSignal) => Promise<void>) | undefined;
 
 		try {
 			// Handle extension commands first (execute immediately, even during streaming)
@@ -1389,36 +1396,49 @@ export class AgentSession {
 			}
 			this._pendingNextTurnMessages = [];
 
-			// Emit before_agent_start extension event
-			const result = await this._extensionRunner.emitBeforeAgentStart(
-				expandedText,
-				currentImages,
-				this._baseSystemPrompt,
-				this._baseSystemPromptOptions,
-			);
-			// Add all custom messages from extensions
-			if (result?.messages) {
-				for (const msg of result.messages) {
-					messages.push({
-						role: "custom",
-						customType: msg.customType,
-						// Untyped extensions can pass null/missing content; normalize at ingestion.
-						content: msg.content ?? [],
-						display: msg.display,
-						details: msg.details,
-						timestamp: Date.now(),
-					});
+			const promptMessages = messages;
+			beforeStart = async (signal) => {
+				try {
+					// Emit before_agent_start extension event
+					const result = await this._extensionRunner.emitBeforeAgentStart(
+						expandedText,
+						currentImages,
+						this._baseSystemPrompt,
+						this._baseSystemPromptOptions,
+					);
+					if (signal.aborted) {
+						preflightResult?.(false);
+						return;
+					}
+					// Add all custom messages from extensions
+					if (result?.messages) {
+						for (const msg of result.messages) {
+							promptMessages.push({
+								role: "custom",
+								customType: msg.customType,
+								// Untyped extensions can pass null/missing content; normalize at ingestion.
+								content: msg.content ?? [],
+								display: msg.display,
+								details: msg.details,
+								timestamp: Date.now(),
+							});
+						}
+					}
+					// Apply extension-modified system prompt, or reset to base
+					if (result?.systemPrompt !== undefined) {
+						this._systemPromptOverride = result.systemPrompt;
+						this.agent.state.systemPrompt = result.systemPrompt;
+					} else {
+						// Ensure we're using the base prompt (in case previous turn had modifications)
+						this._systemPromptOverride = undefined;
+						this.agent.state.systemPrompt = this._baseSystemPrompt;
+					}
+					preflightResult?.(true);
+				} catch (error) {
+					preflightResult?.(false);
+					throw error;
 				}
-			}
-			// Apply extension-modified system prompt, or reset to base
-			if (result?.systemPrompt !== undefined) {
-				this._systemPromptOverride = result.systemPrompt;
-				this.agent.state.systemPrompt = result.systemPrompt;
-			} else {
-				// Ensure we're using the base prompt (in case previous turn had modifications)
-				this._systemPromptOverride = undefined;
-				this.agent.state.systemPrompt = this._baseSystemPrompt;
-			}
+			};
 		} catch (error) {
 			preflightResult?.(false);
 			throw error;
@@ -1428,8 +1448,7 @@ export class AgentSession {
 			return;
 		}
 
-		preflightResult?.(true);
-		await this._runAgentPrompt(messages);
+		await this._runAgentPrompt(messages, beforeStart);
 	}
 
 	/**
@@ -2753,7 +2772,7 @@ export class AgentSession {
 				getScopedModels: () => this._scopedModels,
 				isIdle: () => this.isIdle,
 				isProjectTrusted: () => this.settingsManager.isProjectTrusted(),
-				getSignal: () => this.agent.signal,
+				getSignal: () => this.agent.signal ?? this._agentRunAbortController?.signal,
 				abort: () => {
 					this._abortCurrentRun();
 					// Hosts may restore queued input after the session has been cancelled.

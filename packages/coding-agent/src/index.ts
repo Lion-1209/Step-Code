@@ -463,6 +463,11 @@ export {
 	type StepCronRuntimeOptions,
 	stepCronExtensionInline,
 } from "./features/step-cron.ts";
+export {
+	createStepJevSkillRouterExtension,
+	createStepJevSkillRouterExtensionInline,
+	type StepJevSkillRouterOptions,
+} from "./features/step-jev-skill-router.ts";
 export { createStepProviderConfig, STEP_PROVIDER_ID } from "./features/step-provider/index.ts";
 export {
 	CreateGoalParams,

@@ -71,6 +71,8 @@ For project-level Claude Code skills, add to `.stepcode/settings.json`:
 
 This is progressive disclosure: only descriptions are always in context, full instructions load on-demand.
 
+For catalogs with several skills, optional [Jev skill routing](jev-skill-routing.md) can suggest a relevant skill before the coding model starts. It is disabled by default, keeps the full catalog available, and respects explicit skill commands.
+
 ## Skill Commands
 
 Skills register as `/skill:name` commands:

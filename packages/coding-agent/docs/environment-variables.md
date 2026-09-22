@@ -8,6 +8,9 @@ Step reads the variables below. Configuration shared across launches belongs in
 | `STEP_CODING_AGENT_DIR` | Override the agent directory; default is `~/.stepcode/agent` |
 | `STEP_CODING_AGENT_SESSION_DIR` | Override session storage; `--session-dir` takes precedence |
 | `STEP_API_KEY` | StepFun API credential |
+| `STEP_JEV_SKILL_ROUTING` | Set to `1` to enable optional [Jev skill routing](jev-skill-routing.md); disabled by default |
+| `TYPESAFE_API_KEY` | TypeSafe credential for Jev routing; requires `STEP_JEV_SKILL_ROUTING=1` |
+| `JEV_API_KEY` | Fallback Jev credential when `TYPESAFE_API_KEY` is empty |
 | `STEP_BASE_URL` | Override the StepFun API endpoint |
 | `STEP_PROVIDER`, `STEP_MODEL` | Default provider and model selection |
 | `VISUAL`, `EDITOR` | External editor fallback when `externalEditor` is unset |

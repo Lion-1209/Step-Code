@@ -1155,6 +1155,8 @@ export class ExtensionRunner {
 			this.assertActive();
 			return currentSystemPrompt;
 		};
+		// Keep this operation's signal usable after disposal invalidates its context.
+		const signal = ctx.signal;
 		const messages: NonNullable<BeforeAgentStartEventResult["message"]>[] = [];
 		let systemPromptModified = false;
 
@@ -1163,6 +1165,7 @@ export class ExtensionRunner {
 			if (!handlers || handlers.length === 0) continue;
 
 			for (const handler of handlers) {
+				if (signal?.aborted) return undefined;
 				try {
 					const event: BeforeAgentStartEvent = {
 						type: "before_agent_start",
@@ -1172,6 +1175,7 @@ export class ExtensionRunner {
 						systemPromptOptions,
 					};
 					const handlerResult = await handler(event, ctx);
+					if (signal?.aborted) return undefined;
 
 					if (handlerResult) {
 						const result = handlerResult as BeforeAgentStartEventResult;
@@ -1184,6 +1188,7 @@ export class ExtensionRunner {
 						}
 					}
 				} catch (err) {
+					if (signal?.aborted) return undefined;
 					const message = err instanceof Error ? err.message : String(err);
 					const stack = err instanceof Error ? err.stack : undefined;
 					this.emitError({

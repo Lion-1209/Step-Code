@@ -1018,14 +1018,14 @@ Access to models, providers, and resolved authentication. `ctx.modelRegistry.get
 
 ### ctx.signal
 
-The current agent abort signal, or `undefined` when no agent turn is active.
+The current operation's abort signal, including prompt preparation, or `undefined` when idle.
 
 Use this for abort-aware nested work started by extension handlers, for example:
 - `fetch(..., { signal: ctx.signal })`
 - model calls that accept `signal`
 - file or process helpers that accept `AbortSignal`
 
-`ctx.signal` is typically defined during active turn events such as `tool_call`, `tool_result`, `message_update`, and `turn_end`.
+`ctx.signal` is defined during `before_agent_start` and active turn events such as `tool_call`, `tool_result`, `message_update`, and `turn_end`. Pass it to asynchronous preparation work so cancellation stops that work before the coding model starts. A cancelled `before_agent_start` skips remaining handlers and does not start the agent loop.
 It is usually `undefined` in idle or non-turn contexts such as session events, extension commands, and shortcuts fired while step is idle.
 
 ```typescript
@@ -1043,7 +1043,7 @@ pi.on("tool_result", async (event, ctx) => {
 
 ### ctx.isIdle() / ctx.abort() / ctx.hasPendingMessages()
 
-Control flow helpers. `ctx.isIdle()` is false while Step is processing an agent run, automatic retry, auto-compaction retry, or queued continuation.
+Control flow helpers. `ctx.isIdle()` is false while Step is processing `before_agent_start` hooks, an agent run, automatic retry, auto-compaction retry, or queued continuation.
 
 ### ctx.shutdown()
 

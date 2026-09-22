@@ -20,6 +20,8 @@ Step Code comes with built-in StepPage publishing. Once your local page is ready
 
 - **Token efficiency** — tuned alongside Step models to consume fewer tokens for the same task; Long\-horizon tasks are split across parallel subagents, each with its own isolated context, so redundant content never enters the main conversation\.
 
+- **Jev skill routing** — optional [Jev suggestions](packages/coding-agent/docs/jev-skill-routing.md) help the coding model choose among installed skills before a task starts; manual skill commands and the complete catalog remain available.
+
 - **Static site publishing** — the built\-in steppage plugin publishes a local directory to a shareable static URL in one command, with version management and rollback\.
 
 - **Long\-running task delegation** — `/goal` hands an objective to Step Code, which works toward it autonomously, and `/cron` runs on a schedule; the status line shows a live timer for the active task\.
