@@ -12,9 +12,9 @@
 
 Step Code 运行于终端，单轮任务即可完成代码阅读、修改与测试验证的完整闭环。它与 Step（StepFun）provider 深度协同，登录后从 Step 服务发现可用模型。MCP 工具、Agent Skills、插件与多代理编排开箱即用；长任务可通过 /goal 托管，由 Step Code 持续自主推进。
 
-Step Code 内置 StepPage 发布能力：本地页面构建完成后，只需一条命令即可发布为可访问的静态网站，让开发、调试与交付在同一个终端中完成。
+Step Code 内置 [StepPage](https://platform.stepfun.com/docs/zh/step-code/reference/steppage) 发布能力：本地页面构建完成后，只需一条命令即可发布为可访问的静态网站，让开发、调试与交付在同一个终端中完成。
 
-![StepPage 发布能力演示](https://static-openapi.stepfun.com/resource/demo1-small.gif)
+![StepPage 发布能力演示](https://github.com/user-attachments/assets/66843695-3c77-4b26-bd2c-4cd2397a98bf)
 
 ## Why Step Code
 
