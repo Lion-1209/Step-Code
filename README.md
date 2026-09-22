@@ -12,9 +12,9 @@
 
 Step Code runs in your terminal and handles the full task loop—reading code, making changes, and running tests\. It works with the Step provider and discovers the available Step models after sign\-in\. MCP servers, Agent Skills, plugins, and multi\-agent orchestration work out of the box; you can delegate long\-running tasks to `/goal` and let Step Code drive them forward autonomously\.
 
-Step Code comes with built-in StepPage publishing. Once your local page is ready, you can publish it as an accessible static website with a single command—bringing development, debugging, and delivery all within the same terminal\.
+Step Code comes with built-in [StepPage](https://platform.stepfun.ai/docs/en/step-code/reference/steppage) publishing. Once your local page is ready, you can publish it as an accessible static website with a single command—bringing development, debugging, and delivery all within the same terminal\.
 
-![StepPage publishing demo](https://static-openapi.stepfun.com/resource/demo1-small.gif)
+![StepPage publishing demo](https://github.com/user-attachments/assets/66843695-3c77-4b26-bd2c-4cd2397a98bf)
 
 ## Why Step Code
 
