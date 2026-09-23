@@ -16,6 +16,10 @@ StepCode's core exists to be minimal and to be extensible so that it can be infl
 
 Using AI to write code is fine. Submitting AI-generated slop without understanding it is not.
 
+## Commit Attribution
+
+AI tools may assist with a change, but they must not be recorded as commit co-authors. Keep the author and committer as the human contributor's verified GitHub identity, and do not add `Co-authored-by` or `Co-Authored-By` trailers for Claude, Claude Code, Codex, ChatGPT, OpenAI, Anthropic, or another AI client. The `Commit attribution` check rejects these trailers and identities on pull requests.
+
 If you use an agent, run it from the repository root directory so it picks up `AGENTS.md` automatically. Your agent must follow the rules and guidelines in that file.
 
 ## Issue Review
