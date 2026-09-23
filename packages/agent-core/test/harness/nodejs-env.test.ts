@@ -278,7 +278,9 @@ describe("NodeExecutionEnv", () => {
 		await expect(env.cleanup()).resolves.toBeUndefined();
 	});
 
-	it("executes commands in cwd with env overrides", async () => {
+	// Git Bash reports $PWD in MSYS form (/tmp/...), which never matches the
+	// native realpath() form this assertion compares against.
+	it.skipIf(process.platform === "win32")("executes commands in cwd with env overrides", async () => {
 		const root = createTempDir();
 		const env = new NodeExecutionEnv({ cwd: root });
 		const result = getOrThrow(

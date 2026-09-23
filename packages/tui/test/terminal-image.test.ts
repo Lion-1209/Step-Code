@@ -592,9 +592,11 @@ describe("imageFallback", () => {
 	it("shortens home-prefixed absolute paths without hyperlinks", () => {
 		setCapabilities({ images: null, trueColor: false, hyperlinks: false });
 		try {
-			const abs = join(homedir(), ".pi", "agent", "shot.png");
+			const home = homedir();
+			const abs = join(home, ".pi", "agent", "shot.png");
+			const shortened = `~${abs.slice(home.length)}`; // native separators preserved
 			const result = imageFallback("image/png", { widthPx: 1280, heightPx: 720 }, abs);
-			assert.strictEqual(result, "[Image: ~/.pi/agent/shot.png [image/png] 1280x720]");
+			assert.strictEqual(result, `[Image: ${shortened} [image/png] 1280x720]`);
 		} finally {
 			resetCapabilitiesCache();
 		}
@@ -612,7 +614,9 @@ describe("imageFallback", () => {
 			);
 			// Visible text must use ~/... not the expanded home path.
 			const visible = result.replace(/\x1b\]8;;.*?\x1b\\/g, "");
-			assert.strictEqual(visible, "[Image: ~/.pi/agent/shot.png [image/png] 10x10]");
+			const home2 = homedir();
+			const shortened2 = `~${abs.slice(home2.length)}`; // native separators preserved
+			assert.strictEqual(visible, `[Image: ${shortened2} [image/png] 10x10]`);
 		} finally {
 			resetCapabilitiesCache();
 		}

@@ -543,34 +543,41 @@ describe("AgentHarness tools", () => {
 			expect(textOutput(result)).toMatch(/Showing last 50\.0KB of line 1 \(line is 58\.6KB\)\. Full output:/);
 		});
 
-		it("prepares command, cwd, and an explicit environment with the turn context", async () => {
-			const env = new NodeExecutionEnv({
-				cwd: createTempDir(),
-				shellEnv: { PI_BASH_PREPARE_INHERITED: "inherited" },
-			});
-			getOrThrow(await env.createDir("workspace"));
-			const context = { env, workspace: `${env.cwd}/workspace` };
-			const controller = new AbortController();
-			let receivedContext: typeof context | undefined;
-			let receivedSignal: AbortSignal | undefined;
-			const tool = createBashTool<typeof context>({
-				commandPrefix: "prefix=ready",
-				prepare: async (execution, turnContext, signal) => {
-					receivedContext = turnContext;
-					receivedSignal = signal;
-					execution.cwd = turnContext.workspace;
-					execution.env = { PI_BASH_PREPARE_EXPLICIT: "explicit" };
-					execution.inheritEnv = false;
-					execution.command += `\nprintf '%s:%s:%s:%s' "$prefix" "\${PI_BASH_PREPARE_INHERITED-}" "$PI_BASH_PREPARE_EXPLICIT" "$PWD"`;
-				},
-			});
+		// Git Bash reports $PWD in MSYS form (/tmp/...), which never matches the
+		// native canonicalPath() form this assertion compares against.
+		it.skipIf(process.platform === "win32")(
+			"prepares command, cwd, and an explicit environment with the turn context",
+			async () => {
+				const env = new NodeExecutionEnv({
+					cwd: createTempDir(),
+					shellEnv: { PI_BASH_PREPARE_INHERITED: "inherited" },
+				});
+				getOrThrow(await env.createDir("workspace"));
+				const context = { env, workspace: `${env.cwd}/workspace` };
+				const controller = new AbortController();
+				let receivedContext: typeof context | undefined;
+				let receivedSignal: AbortSignal | undefined;
+				const tool = createBashTool<typeof context>({
+					commandPrefix: "prefix=ready",
+					prepare: async (execution, turnContext, signal) => {
+						receivedContext = turnContext;
+						receivedSignal = signal;
+						execution.cwd = turnContext.workspace;
+						execution.env = { PI_BASH_PREPARE_EXPLICIT: "explicit" };
+						execution.inheritEnv = false;
+						execution.command += `\nprintf '%s:%s:%s:%s' "$prefix" "\${PI_BASH_PREPARE_INHERITED-}" "$PI_BASH_PREPARE_EXPLICIT" "$PWD"`;
+					},
+				});
 
-			const result = await tool.execute("bash-prepare", { command: ":" }, controller.signal, undefined, context);
+				const result = await tool.execute("bash-prepare", { command: ":" }, controller.signal, undefined, context);
 
-			expect(receivedContext).toBe(context);
-			expect(receivedSignal).toBe(controller.signal);
-			expect(textOutput(result)).toBe(`ready::explicit:${getOrThrow(await env.canonicalPath(context.workspace))}`);
-		});
+				expect(receivedContext).toBe(context);
+				expect(receivedSignal).toBe(controller.signal);
+				expect(textOutput(result)).toBe(
+					`ready::explicit:${getOrThrow(await env.canonicalPath(context.workspace))}`,
+				);
+			},
+		);
 
 		it("supports command prefixes", async () => {
 			const context = createContext();
