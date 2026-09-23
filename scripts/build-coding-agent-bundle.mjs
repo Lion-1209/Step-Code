@@ -178,7 +178,12 @@ function outputBytes(metafiles) {
 // stays self-contained despite the entry now living in the app package. Always
 // rebuild rather than trusting a pre-existing dist/main.js: a stale app compile
 // from an earlier checkout would otherwise be baked into the bundle.
-execFileSync("npm", ["--prefix", appEntryDir, "run", "build"], { stdio: "inherit", cwd: repoRoot });
+execFileSync("npm", ["--prefix", appEntryDir, "run", "build"], {
+	stdio: "inherit",
+	cwd: repoRoot,
+	// npm is npm.cmd on Windows; spawning batch files requires a shell.
+	shell: process.platform === "win32",
+});
 
 for (const entry of [
 	join(appEntryDistDir, "main.js"),
