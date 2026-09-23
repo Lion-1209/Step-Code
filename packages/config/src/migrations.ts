@@ -8,7 +8,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import chalk from "chalk";
 
 const MIGRATION_GUIDE_URL =
@@ -142,7 +142,9 @@ export function migrateSessionsFromAgentRoot(agentDir: string): void {
 			}
 
 			// Move the file
-			const fileName = file.split("/").pop() || file.split("\\").pop();
+			// basename handles both separators on every platform; splitting on "/"
+			// alone keeps the whole backslash path on Windows and breaks the rename.
+			const fileName = basename(file);
 			const newPath = join(correctDir, fileName!);
 
 			if (existsSync(newPath)) continue; // Skip if target exists
